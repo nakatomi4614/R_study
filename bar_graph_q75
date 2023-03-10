@@ -1,0 +1,36 @@
+#棒グラフが並んでるやつを作る。
+#線量評価の７５パーセンタイル値をグラフ化する
+
+library(readxl)
+library(gtsummary)
+library(tidyverse)
+library(ggplot2)
+library(RColorBrewer)
+library(MASS)
+library(fitdistrplus)
+library(car)
+library(dplyr)
+theme_gtsummary_mean_sd()
+
+#data読み込み
+image_flu_df <- read_excel("image_flu_df.xlsx")
+sort_name <- as.list(unique(image_flu_df$surgical_site))
+df = image_flu_df %>%
+  filter(,`surgical_site` == sort_name[1])
+#countIDをつける
+df_sorted <-arrange(df,dose_mGy) 
+df_sorted$countID <- 1:nrow(df_sorted)
+#75パーセンタイルのDFを作成する
+q75 <- quantile(df_sorted$dose_mGy,0.75,type=6) 
+i <- which(df_sorted$dose_mGy >q75)[1] -1
+df_q75 <- df_sorted[i,]
+
+#棒グラフ
+b <- ggplot(df_sorted, aes(x = countID, y = dose_mGy)) +
+  geom_bar(stat = "identity" ,fill="blue") +
+  geom_bar(data = df_q75, stat="identity",fill="red") +
+  theme_bw() +
+  labs(x = 'ID', y = 'dose[mGy]') +
+  ggtitle('exposure dose(wrist joint)') +
+  theme(plot.title = element_text(hjust = 0.5))
+plot(b)
